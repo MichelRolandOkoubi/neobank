@@ -1,0 +1,13 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /app
+
+COPY src/services/Account.API/Account.API.csproj src/services/Account.API/
+RUN dotnet restore src/services/Account.API/Account.API.csproj
+
+COPY . .
+RUN dotnet publish src/services/Account.API/Account.API.csproj -c Release -o /out
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /out .
+ENTRYPOINT ["dotnet", "Account.API.dll"]

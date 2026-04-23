@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: neobank-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: neobank
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d neobank"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  identity-api:
+    build:
+      context: .
+      dockerfile: src/services/Identity.API/Dockerfile
+    container_name: identity-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=neobank;Username=admin;Password=password
+      - Jwt__Key=YourSuperSecretKeyWithAtLeast32Chars!
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  account-api:
+    build:
+      context: .
+      dockerfile: src/services/Account.API/Dockerfile
+    container_name: account-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=neobank;Username=admin;Password=password
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  transaction-api:
+    build:
+      context: .
+      dockerfile: src/services/Transaction.API/Dockerfile
+    container_name: transaction-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=neobank;Username=admin;Password=password
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ai-insights-api:
+    build:
+      context: .
+      dockerfile: src/services/AIInsights.API/Dockerfile
+    container_name: ai-insights-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - OpenAI__ApiKey=${OPENAI_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/gateway/ApiGateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "5000:8080"
+    depends_on:
+      - identity-api
+      - account-api
+      - transaction-api
+      - ai-insights-api
+
+networks:
+  default:
+    name: neobank-network
