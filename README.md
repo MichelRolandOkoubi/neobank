@@ -1,4 +1,4 @@
-# 🏦 NeoBank Microservices Core - MVP
+# 🏦 NeoBank Microservices Core
 
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512bd4?logo=dotnet)](https://dotnet.microsoft.com/en-us/download/dotnet/10.0)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15.0-000000?logo=next.js)](https://nextjs.org/)
